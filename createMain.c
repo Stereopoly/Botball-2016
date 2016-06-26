@@ -1,175 +1,267 @@
 #include "createDrive.h"
 #include <kipr/botball.h>
 
-void sweep() {
-	createFClawOpen();
-  	createFClawClose();
-  	createFClawOpen();
-  	createFClawClose();
-  	createTurnLeft(200, 10);
-  	createTurnRight(200, 10);
-  	createTurnLeft(200, 10);
-  	createTurnRight(200, 10);
-  	createTurnLeft(200, 10);
-  	createTurnRight(200, 10);
-  	createFClawOpen();
-  	createFClawClose();
-}
-  
-void start() {
-  	createConnectAll();
-  	createArmStay(3);
-    wait_for_light(5);
-    msleep(5);
-    shut_down_in(119);
-}
+void Calibrate(int* blackValue, int* whiteValue) {
+  int cont = 1;
+  clawClose();
+  set_servo_position(clawMoverPort, clawCarryPos+200);
+  msleep(300);
 
-void grabBotGuy() {
-  	createDrive(300, 66);      // increased here to decrease chance of missing botguy
-  	createTurnRight(200, 90);
-  	createSquareUp(200, 1000);
-  	createDriveUntilTouch(250);
-  	createDriveBack(200, 5);
-  	createTurnLeft(200, 30);
-  	createDrive(300, 0.5);
-  	createFClawOpen();
-  	msleep(1000);
-  	createArmDownOffset(75, 0.9, 1);
-  	createArmStay(3);
-  	createFClawClose();
-  	msleep(1000);
-  	createArmUpOffset(75, 0.8, 1);
- 	createArmStay(16);
+  printf("please calibrate black using the left color sensor\n");
+  while (cont == 1) {
+    while (a_button() != 1) {
+      printf("current black value seen is %d\n", analog(leftSensorPort));
+    }
+    if(analog(leftSensorPort) > 2500) {
+      cont = 0;
+    }
+    else {
+      printf("please recalibrate black\n");
+    }
+  }
+  *blackValue = analog(leftSensorPort);
+
+  cont = 1;
+
+  msleep(1000);
+
+  printf("please calibrate white using the left color sensor\n");
+  while (cont == 1) {
+    while (a_button() != 1) {
+      printf("current white value seen is %d\n", analog(leftSensorPort));
+    }
+    if(analog(leftSensorPort) < 525) {
+      cont = 0;
+    }
+    else {
+      printf("please recalibrate white\n");
+    }
+  }
+  *whiteValue = analog(leftSensorPort);
 }
 
-void grabCube() {
-  	createDriveBack(300, 9);
-  	createTurnRight(200, 145);
-  	createDrive(200, 34);      // increased here to adjust for botguy
-  	createTurnRight(200, 82);
-  	createSquareUp(200, 1500);
-  	grabPipe();
-  	createBClawOpen();
-  	msleep(700);
-    createArmUpOffset(75, 0.8, 1);
-  	createArmStay(70);
-  	//msleep(700);
-  	createBClawClose();
-  	msleep(1500);
-  	createArmDownOffsetTime(75, 630, 0.8, 1);
-  	createArmStay(16);
+void PickUpStartTribble() {
+  set_servo_position(clawMoverPort, clawDownPos);
+  msleep(200);
+  clawOpen();
+  CreateDrive(createDriveSpeed, 28);
+  set_servo_position(clawPort, clawClosePos-110);
+  msleep(200);
+  clawCarry();
+  msleep(200);
 }
 
-void setCubeDown() {
-  	createDrive(200, 10);
-  	createTurnRight(200, 90);
-  	createDriveBack(80, 8);
-  	releasePipe();
-  	createDrive(200, 20);
-  	createTurnRight(200, 105);
-  	createDriveBack(200, 25);
-  	//createSquareUp(100, 2222);
-  	//createDrive(200, 8);
-  	//createTurnLeft(200, 90);
-  	//createDrive(200, 38);
-  	//createTurnRight(200, 90);
-  	createArmUpOffsetTime(75, 500, 0.9, 1);
-  	createBClawOpen();
- 	msleep(700);
-  	createArmUpOffset(75, 0.9, 1); //dropped off
-  	createArmStay(16);
-  	pipeUp();
+void PickUpFirstPile(int blackValue, int whiteValue) {
+  lineFollowDistance(blackValue, whiteValue, 300, 42);
+  clawOpen();
+  msleep(200);
+  clawDown();
+  //lineFollow(blackValue, whiteValue, 1.4, 300);
+  lineFollowDistance(blackValue, whiteValue, 300, 38);
+  clawCloseSlow(clawClosePos);
+  clawOpen();
+  //clawCloseSlow(clawClosePos);
+  //clawOpen();
+
+  clawCloseSlow(clawClosePos);
 }
 
-void setBotGuyDown() {
-  	createTurnLeft(200, 145);
-  	createDrive(200, 45);
-  	createTurnRight(200, 82);
-  	createDrive(200, 46);
-  	releasePipe();
-  	/*createTurnRight(200, 90);
-  	createDrive(200, 80);
-  	createFClawOpen();
-  	createTurnLeft(200, 150);
-  	createDrive(200, 20);
-  	createTurnRight(200, 270);
-  	createDrive(200, 230);*/
-
-  	createArmUpOffset(75, 0.9, 1);
-  	createArmStay(16);
-    createDrive(200, 22);
-    createTurnLeft(200, 5);
-    //createTurnLeft(150, 25);
- 	//createDrive(200, 8);
-  	//createTurnRight(60, 5);
-  	createFClawOpen();
- 	msleep(500);
-    createDrive(400, 5);
-    createDriveBack(400, 5);
-  	createDriveBack(200, 62);
- //	createTurnLeft(200, 3);
+void GrabBin(int blackValue, int whiteValue) {
+  clawUp();
+  lineFollowDistance(blackValue, whiteValue, 300, 30);
+  CreateTurnRight(250, 89);
+  CreateSquareUp(createDriveSpeed, 700);
+  CreateDrive(createDriveSpeed,5);
+  CreateTurnRight(150, 90);
+  //CreateDrive(150, 10);
+  LowerBin();
+  CreateDriveBack(createDriveSpeed, 14);
+  CreateWobbleBackTill (100, 100);
+  msleep(200);
+  RaiseBin();
+  msleep(200);
+  CreateDrive(createDriveSpeed, 15);
+  CreateTurnRight(200, 29);
 }
 
-void knockOffPINGPONGBALLS(){
-  	createTurnLeft(200, 25);
-    createDrive(200, 6);
-  
-  	createFClawOpen();
-    createTurnRight(400, 2);
-    createFClawClose();
-    createTurnLeft(400, 2);
-    createFClawOpen();
-    createTurnRight(400, 2);
-    createFClawClose();
-    createTurnLeft(400, 2);
-    createFClawOpen();
-    createTurnRight(400, 2);
-    createFClawClose();
-    createTurnLeft(400, 2);
-    createFClawOpen();
-    createTurnRight(400, 2);
-    createFClawClose();
-    createTurnLeft(400, 2);
-    createFClawClose();
-    createTurnRight(400, 2);
-  
-    createDriveBack(200, 15);
-    createTurnRight(200, 40);
-    createDriveBack(200, 35);
-    createTurnLeft(200, 75);
-    createDrive(200, 8);  
-    
-    createArmUpOffsetTime(75, 0.1, 0.9, 1);
-    
-    createFClawOpen();
-    createTurnRight(400, 2);
-    createFClawClose();
-    createTurnLeft(400, 2);
-    createFClawOpen();
-    createTurnRight(400, 2);
-    createFClawClose();
-    createTurnLeft(400, 2);
-    createFClawOpen();
-    createTurnRight(400, 2);
-    createFClawClose();
-    createTurnLeft(400, 2);
-    createFClawOpen();
-    createTurnRight(400, 2);
-    createFClawClose();
-    createTurnLeft(400, 2);
-    createFClawClose();
-    createTurnRight(400, 2);
-  
-  	createFClawClose();    
+void DumpPile() {
+  //clawCarry();
+  clawUp();
+  msleep(800);
+  clawOpen();
+  msleep(500);
+  clawClose();
+  //clawOpen();
+  //clawClose();
+  //clawOpen();
+  //clawClose();
+  clawSquareUp();
+  msleep(300);
+}
+
+int PickUpSecondPile() {
+  //clawDown();
+  //CreateWobbleBack (100, 100, 4);
+  //clawSquareUp();
+  int greenSeen = 0;
+  // Robot sitting squared up after picking up bin now
+
+  // Pickup 2nd pile of poms
+  CreateDrive(createDriveSpeed, 9);
+  CreateTurnLeft(100, 99);
+  //  CreateDriveBack(100, 2);
+  set_servo_position(clawPort, clawOpenPos-100);
+  msleep(200);
+  clawDown();
+
+  CreateDrive(createDriveSpeed, 15);
+  clawCloseSlow(clawClosePos);
+  CreateDrive(createDriveSpeed, 10);
+  clawOpen();
+  if (FindColor() == 1) {
+    LineTribbles();
+    greenSeen = 1;
+  }
+  else {
+    clawClose();
+  }
+  //CreateDriveBack(100, 10);
+  clawSquareUp();
+  CreateDriveBack(createDriveSpeed, 12);
+  CreateTurnRight(200, 94);
+  CreateSquareUp(200, 800);
+  CreateDrive(createDriveSpeed, 18);
+  DumpPile();
+  CreateSquareUp(100, 3000);
+  return greenSeen;
+}
+
+void PrepareToPickUpSecondPile() {
+  CreateDriveBack(createDriveSpeed, 15);
+  CreateSquareUp(150, 3000);
+}
+
+int PickUpThirdPile(int greenSeen) {
+  clawOpen();
+  msleep(200);
+  clawDown();
+  CreateDrive(createDriveSpeed, 25);
+  clawCloseSlow(clawClosePos);
+  clawOpen();
+  if(greenSeen != 1 && FindColor() == 1) {
+    greenSeen = 1;
+    clawCloseSlow(clawClosePos);
+    CreateDriveBack(createDriveSpeed, 10);
+    CreateTurnLeft(200, 100);
+    LineTribbles();
+    CreateTurnRight(200, 92);
+    CreateDrive(createDriveSpeed, 5);
+  }
+  else {
+    clawCloseSlow(clawClosePos);
+    clawOpen();
+    clawCloseSlow(clawClosePos);
+  }
+  //CreateDrive(100, 22);
+  return greenSeen;
+}
+
+void PickUpFourthPile(int greenSeen) {
+  CreateDrive(createDriveSpeed, 24);
+  clawOpen();
+  msleep(200);
+  clawDown();
+  CreateDrive(createDriveSpeed, 13);
+
+  if(greenSeen != 1) {
+    clawClose();
+    CreateDriveBack(createDriveSpeed, 10);
+    LineTribbles();
+    CreateTurnRight(100, 4);
+    CreateDrive(createDriveSpeed, 10);
+  }
+  else {
+    clawCloseSlow(clawClosePos);
+    clawOpen();
+    clawCloseSlow(clawClosePos);
+  }
+}
+
+void GrabComposter(int blackValue, int whiteValue) {
+  CreateDrive(createDriveSpeed, 29);
+  CreateTurnLeft(100, 27);
+  CreateDrive(createDriveSpeed, 37);
+  clawOpen();
+  CreateDrive(createDriveSpeed, 29);
+  CreateTurnRight(100, 14);
+  CreateDrive(createDriveSpeed, 14);
+  //CreateLineSquareUp(50, blackValue, whiteValue);
+  //msleep(2000);
+  //CreateDrive(100, 5);
+  clawCloseSlow(clawClosePos+100);
+  msleep(200);
+  clawUp();
+  msleep(200);
+  clawOpen();
+  msleep(300);
+  CreateDrive(createDriveSpeed, 25);
+  CreateTurnLeft(100, 90);
+  CreateSquareUp(100, 2000);
+  LowerBin();
 }
 
 int main() {
-    start();
-  	grabBotGuy();
-  	grabCube();
-    setCubeDown();
-  	setBotGuyDown();
-  	knockOffPINGPONGBALLS();
-    ao();
-  	return 0;
+  int greenSeen = 0;
+
+  printf("starting up\n");
+  StartUp();
+  printf("started up\n");
+  //clawClose();
+  //clawCarry();
+  //CreateDrive(300, 80);
+  
+  clawClose();
+  clawUp();
+  //CreateDrive(300, 60);
+  
+  int blackValue;
+  int whiteValue;
+  
+  //CreateDrive(createDriveSpeed, 150);
+  
+ // LineTribbles();
+  
+  Calibrate(&blackValue, &whiteValue);
+
+  msleep(3000);
+  printf("starting\n");
+  shut_down_in(119);
+
+  PickUpStartTribble();
+
+  PickUpFirstPile(blackValue, whiteValue);
+
+  GrabBin(blackValue, whiteValue);
+
+  DumpPile();
+  
+  PrepareToPickUpSecondPile();
+
+  greenSeen = PickUpSecondPile(greenSeen);
+
+  greenSeen = PickUpThirdPile(greenSeen);
+
+  DumpPile();
+
+  PickUpFourthPile(greenSeen);
+
+  DumpPile();
+
+  GrabComposter(blackValue, whiteValue);
+
+  msleep(1000);
+
+  ao();
+  camera_close();
+  return 0;
 }
