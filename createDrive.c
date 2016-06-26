@@ -1,176 +1,442 @@
 #include "createDrive.h"
 #include <kipr/botball.h>
 
-void createDrive (float speed, float distance) {
-	set_create_distance(0);
-	create_drive_direct(speed*createRightOffset, speed*createLeftOffset);
-	while (get_create_distance() <= distance*10*createDriveOffset) {
+void StartUp() {
+  create_connect();
+  set_servo_position(clawMoverPort, clawUpPos);
+  set_servo_position(clawPort, clawOpenPos);
+  enable_servos();
+  set_servo_position(clawMoverPort, clawDownPos);
+  set_servo_position(clawPort, clawOpenPos);
+  set_servo_position(binPort, grabBinPos);
+  printf("opening camera\n");
+  camera_open();
+}
+
+void CreateDrive (float speed, float distance) {
+  set_create_distance(0);
+  int distanceDriven = distance*10*createDriveOffset;
+  int distToAlternate = 0;
+  int leftSpeedAdjust = 1;
+  int prevDist = 0;
+  create_drive_direct(speed*createLeftOffset, speed*createRightOffset);
+  while (get_create_distance() <= distanceDriven) {
+    distToAlternate = get_create_distance() - prevDist;
+    if (distToAlternate >= 10) {
+      // Alternative speed
+      leftSpeedAdjust ^= 1;
+      distToAlternate = 0;
+      prevDist = get_create_distance();
+      create_drive_direct(speed*createLeftOffset + leftSpeedAdjust, speed*createRightOffset);
     }
-	create_stop();
+  }
+  create_stop();
 }
 
-void createDriveBack (float speed, float distance) {
-	set_create_distance(distance*createDriveOffset);
-	create_drive_direct(-speed*createRightOffset, -speed*createLeftOffset);
-	while (get_create_distance() >= 0) {
+void CreateDriveStraighter (float speed, float distance) {
+  set_create_distance(0);
+  create_drive_direct(speed*0.95, speed*1);
+  while (get_create_distance() <= distance*10*createDriveOffset) {
+  }
+  create_stop();
+}
+
+void CreateDriveSlowDown (float startSpeed, float distance) { 
+  distance *= 10;
+  float prev_distance = distance;
+  float remainingDistance = distance;
+  float curr_speed = startSpeed;
+
+  set_create_distance(0);
+  create_drive_direct(startSpeed*createLeftOffset, startSpeed*createRightOffset);
+
+  while (remainingDistance > 0) {
+    remainingDistance = distance - get_create_distance();
+    if (remainingDistance <= prev_distance/4) {
+      prev_distance = remainingDistance;
+      if (curr_speed >= 30) {
+        if (curr_speed <= 70) {
+          create_drive_direct(60*createLeftOffset, 60*createRightOffset);
+        }
+        else {
+          printf("changing speed from %f to %f, remaining distance is now %f\n", curr_speed, curr_speed/2, remainingDistance);
+          curr_speed = curr_speed/2;
+          create_drive_direct(curr_speed*createLeftOffset, curr_speed*createRightOffset);
+        }
+      }
     }
-	create_stop();
+  }
+
+  create_stop();
 }
 
-void createDriveUntilTouch (float speed) {
-	create_drive_direct(speed*createRightOffset, speed*createLeftOffset);
-  	while (!get_create_rbump() && !get_create_lbump()) {
+void CreateDriveBack (float speed, float distance) {
+  int distanceDriven = distance*10*createDriveOffset;
+  int distToAlternate = 0;
+  int leftSpeedAdjust = 1;
+  int prevDist = distanceDriven;
+  set_create_distance(distanceDriven);
+  create_drive_direct(-speed*createLeftOffset, -speed*createRightOffset);
+  while (get_create_distance() > 0) {
+    distToAlternate = prevDist - get_create_distance();
+    if (distToAlternate >= 10) {
+      // Alternative speed
+      leftSpeedAdjust ^= 1;
+      distToAlternate = 0;
+      prevDist = get_create_distance();
+      create_drive_direct(-(speed*createLeftOffset + leftSpeedAdjust), -speed*createRightOffset);
     }
-  	create_stop();
+  }
+  create_stop();
 }
 
-void createSquareUp(float speed, float time) {
-  	create_drive_direct(-speed*createRightOffset, -speed*createLeftOffset);
-  	msleep(time);
-  	create_stop();
+void CreateWobble (int wobbleSpeed, float wobbleTime, int wobbles) {
+  int counter = 0;
+  while (counter < wobbles) {
+    create_drive_direct(0, wobbleSpeed);
+    msleep(wobbleTime);
+    create_drive_direct(wobbleSpeed, 0);
+    msleep(wobbleTime);
+    ++counter;
+  }
+  create_stop();
 }
 
-void driveUntil (float speed, float time) {
-	create_drive_direct(speed*createRightOffset, speed*createLeftOffset);
-  	msleep(time);
-  	create_stop();
+void CreateWobbleBack (int wobbleSpeed, float wobbleTime, int wobbles) {
+  int counter = 0;
+  while (counter < wobbles) {
+    create_drive_direct(0, -wobbleSpeed);
+    msleep(wobbleTime);
+    create_drive_direct(-wobbleSpeed, 0);
+    msleep(wobbleTime);
+    ++counter;
+  }
+  create_stop();
 }
 
-
-void createTurnLeft(float speed, int degrees) {
-	set_create_normalized_angle(0); //Reset the angle
-	create_drive_direct(-speed*createLeftOffset, speed*createRightOffset); //Spin at half power
-	while(get_create_normalized_angle() < (degrees - 20)*createTurnOffset) {} //go most of the distance
-	create_drive_direct(-speed*createLeftOffset/5, speed*createRightOffset/5); //slow down as to not overshoot
-	while(get_create_normalized_angle() < degrees) {} //and finish the turn
-	create_stop();
+void CreateWobbleBackTill (int wobbleSpeed, float wobbleTime) {
+  while (!digital(touchPort)) {
+    create_drive_direct(0, -wobbleSpeed);
+    msleep(wobbleTime);
+    create_drive_direct(-wobbleSpeed, 0);
+    msleep(wobbleTime);
+  }
+  create_stop();
 }
 
-void createTurnRight(float speed, int degrees) {
-	set_create_normalized_angle(degrees*createTurnOffset); //Reset the angle
-	create_drive_direct(speed*createLeftOffset, -speed*createRightOffset); //Spin at half power
-	while(get_create_normalized_angle() > 20) {} //go most of the distance
-	create_drive_direct(speed*createLeftOffset/5, -speed*createRightOffset/5); //slow down as to not overshoot
-	while(get_create_normalized_angle() > 0) {} //and finish the turn
-	create_stop();
+void CreateDriveUntilTouch (float speed) {
+  create_drive_direct(speed*createLeftOffset, speed*createRightOffset);
+  while (!get_create_rbump() && !get_create_lbump()) {
+  }
+  create_stop();
 }
-/*
-void createMoveArm (float speed, int position) {
-	int arm_pos_calc = -(down_pos_counter/start_pos)*position + down_pos_counter;
-    if (get_motor_position_counter(armMotorF) > arm_pos_calc*armCalcOffset) {
-		//too high
-		//go down
-		motor(armMotorF, speed);
-		motor(armMotorB, -speed);
+
+void CreateSquareUp(float speed, float time) {
+  create_drive_direct(-speed*createLeftOffset, -speed*createRightOffset);
+  msleep(time);
+  create_stop();
+}
+
+void CreateDriveUntil (float speed, float time) {
+  create_drive_direct(speed*createLeftOffset, speed*createRightOffset);
+  msleep(time);
+  create_stop();
+}
+
+/*int createDriveUntilColor(float speed) {
+  create_drive_direct(speed*createLeftOffset, speed*createRightOffset);
+  camera_update();
+  int cont = 1;
+  int i = 0;
+  while(cont == 1) {
+    camera_update();
+    if((get_object_count(red_channel) > 0 && get_object_center_y(red_channel, 0) < 110 && get_object_center_y(red_channel, 0) > 25) || 
+       (get_object_count(green_channel) > 0 && get_object_center_y(green_channel, 0) < 110 && get_object_center_y(green_channel, 0) > 25)) {
+     	while(i < 7) {
+        camera_update();
+        if(!(get_object_count(red_channel) > 0 || get_object_center_y(red_channel, 0) < 110 || get_object_center_y(red_channel, 0) > 25 || 
+             get_object_count(green_channel) > 0 || get_object_center_y(green_channel, 0) < 110 || get_object_center_y(green_channel, 0) > 25)) {
+          break;
+        }
+        if(i == 6) {
+          cont = 0;
+          break;
+        }
+        msleep(100);
+        ++i;
+      }
     }
-  	else if (get_motor_position_counter(armMotorF) < arm_pos_calc*armCalcOffset) {
-		//too low
-		//go up
-		motor(armMotorB, speed);
-		motor(armMotorF, -speed);
+  }
+  if(get_object_count(red_channel) > 0 && get_object_center_y(red_channel, 0) < 110 && get_object_center_y(red_channel, 0) > 25) {
+    return 0;
+  }
+  else {
+    return 1;
+  }
+  ao();
+}*/
+
+void CreateTurnLeft(float speed, int degrees) {
+  set_create_normalized_angle(0); //Reset the angle
+  create_spin_CCW(speed); //Spin at half power
+  while(get_create_normalized_angle() < (degrees - 20)*createTurnOffset) {} //go most of the distance
+  create_spin_CCW(speed/5); //slow down as to not overshoot
+  while(get_create_normalized_angle() < degrees) {} //and finish the turn
+  create_stop();
+}
+
+void CreateTurnRight(float speed, int degrees) {
+  set_create_normalized_angle(degrees*createTurnOffset); //Reset the angle
+  create_spin_CW(speed); //Spin at half power
+  while(get_create_normalized_angle() > 20) {} //go most of the distance
+  create_spin_CW(speed/5); //slow down as to not overshoot
+  while(get_create_normalized_angle() > 0) {} //and finish the turn
+  create_stop();
+}
+
+void miniGrabberDown() {
+  set_servo_position(miniMoverPort, miniDownPos);
+  msleep(300);
+}
+
+void miniGrabberUp() {
+  set_servo_position(miniMoverPort, miniUpPos);
+  msleep(300);
+}
+
+void miniGrabberMid() {
+  set_servo_position(miniMoverPort, miniMidPos);
+  msleep(300);
+}
+
+void RaiseBin() {
+  int curr_pos = releaseBinPos;
+  while(curr_pos > grabBinPos) {
+    if(curr_pos - 80 < grabBinPos) {
+      curr_pos = grabBinPos;
     }
-	while (!(arm_pos_calc*armCalcOffset-10 < -get_motor_position_counter(armMotorF) &&
-		-get_motor_position_counter(armMotorF) < arm_pos_calc*armCalcOffset+10)) {
-	}
-  	ao();
-}
-
-void createResetArm(float speed) {
-  	motor(armMotorB, speed);
-	motor(armMotorF, -speed);
-  	while (!digital(touchPort)) {
+    else {
+      curr_pos -= 80;
     }
-  	ao();
+    set_servo_position(binPort, curr_pos);
+    printf("setting bin pos to %d\n", curr_pos);
+    msleep(100);
+  }
+  msleep(300);
+  printf("done raising\n");
 }
-*/
 
-void createArmStay(float speed) {
-	motor(armMotorB, -speed);
-	//motor(armMotorF, -1);
+void LowerBin() {
+  set_servo_position(binPort, releaseBinPos);
+  msleep(300);
 }
 
-void createArmUp(float speed) {
-  	motor(armMotorB, -speed*BArmOffset);
-	motor(armMotorF, speed*FArmOffset);
-  	while (!digital(touchPortB)) {
+void clawDown() {
+  set_servo_position(clawMoverPort, clawDownPos);
+  msleep(300);
+}
+
+void clawUp() {
+  set_servo_position(clawMoverPort, clawUpPos);
+  msleep(300);
+}
+
+void clawCarry() {
+  set_servo_position(clawMoverPort, clawCarryPos);
+  msleep(300);
+}
+
+void clawSquareUp() {
+  set_servo_position(clawMoverPort, clawSquareUpPos);
+  msleep(300);
+}
+
+void clawOpen() {
+  set_servo_position(clawPort, clawOpenPos);
+  msleep(300);
+}
+
+void clawClose() {
+  set_servo_position(clawPort, clawClosePos);
+  msleep(300);
+}
+
+void clawCloseSlow(int closePos) {
+  int curr_pos = clawOpenPos;
+  while(curr_pos > closePos-100) {
+    if(curr_pos - 110 < closePos-100) {
+      curr_pos = closePos-100;
     }
-  	ao();
-}
-
-void createArmUpOffset(float speed, float FOffset, float BOffset) {
-  	motor(armMotorB, -speed*BOffset);
-	motor(armMotorF, speed*FOffset);
-  	while (!digital(touchPortB)) {
+    else {
+      curr_pos -= 110;
     }
-  	ao();
+    set_servo_position(clawPort, curr_pos);
+    printf("setting claw pos to %d\n", curr_pos);
+    msleep(100);
+  }
+  msleep(300);
+  printf("done closing\n");
 }
 
-void createArmUpOffsetTime(float speed, float time, float FOffset, float BOffset) {
-  	motor(armMotorB, -speed*BOffset);
-	motor(armMotorF, speed*FOffset);
-  	msleep(time);
-  	ao();
-}
+void lineFollow(int blackValue, int whiteValue, float time, float speed) {
+  int initial_seconds = seconds();
+  float right_value;
+  float left_value;
+  float right_speed;
+  float left_speed;
+  float right_ratio;
+  float left_ratio;
+  float multiplier = 0.5;
+  float diff;
 
-void createArmDownOffset(float speed, float FOffset, float BOffset) {
-  	motor(armMotorB, speed*BOffset);
-	motor(armMotorF, -speed*FOffset);
-  	while (!digital(touchPortF)) {
+  diff = blackValue - whiteValue;
+  while(seconds() - initial_seconds < time) {
+    right_value = analog(rightSensorPort);
+    left_value = analog(leftSensorPort);
+
+    right_ratio = ((right_value - whiteValue) / diff);
+    if(right_ratio > 1) {
+      right_ratio = 1;
     }
-  	ao();
-}
+    right_speed = speed * (1 - right_ratio * multiplier);
 
-void createArmDown(float speed) {
-  	motor(armMotorB, speed*BArmOffset);
-	motor(armMotorF, -speed*FArmOffset);
-  	while (!digital(touchPortF)) {
+    left_ratio = ((left_value-whiteValue)/diff);
+    if(left_ratio > 1) {
+      left_ratio = 1;
     }
-  	ao();
+    left_speed = speed*(1-left_ratio * multiplier);
+    //printf("right ratio = %f, left ratio = %f", right_ratio, left_ratio);
+    create_drive_direct(left_speed, right_speed);
+    msleep(5);
+  }
+
+  create_stop();
 }
 
-void createArmDownOffsetTime(float speed, float time, float FOffset, float BOffset) {
-  	motor(armMotorB, speed*BOffset);
-	motor(armMotorF, -speed*FOffset);
-  	msleep(time);
-  	ao();
+void lineFollowDistance(int blackValue, int whiteValue, float speed, float distance) {
+  float right_value;
+  float left_value;
+  float right_speed;
+  float left_speed;
+  float right_ratio;
+  float left_ratio;
+  float multiplier = 0.5;
+  float diff;
+
+  diff = blackValue - whiteValue;
+  set_create_distance(0);
+  while(get_create_distance() < distance*10*createDriveOffset) {
+    right_value = analog(rightSensorPort);
+    left_value = analog(leftSensorPort);
+
+    right_ratio = ((right_value - whiteValue) / diff);
+    if(right_ratio > 1) {
+      right_ratio = 1;
+    }
+    right_speed = speed * (1 - right_ratio * multiplier);
+
+    left_ratio = ((left_value-whiteValue)/diff);
+    if(left_ratio > 1) {
+      left_ratio = 1;
+    }
+    left_speed = speed*(1-left_ratio * multiplier);
+    //printf("right ratio = %f, left ratio = %f", right_ratio, left_ratio);
+    create_drive_direct(left_speed, right_speed);
+    msleep(5);
+  }
+
+  create_stop();
 }
 
-void createFClawClose () { //BotGuy Claw Close
-	set_servo_position(FClawServo, FClawClose);
+int checkTribbles () {
+  camera_update();
+  if (get_object_count(greenChannel) > 0) {
+    printf("green object seen \n");
+    return 1;
+  }
+  else if (get_object_count(redChannel) > 0) {
+    printf("red object seen \n");
+    return 0;
+  }
+  return 2;
 }
 
-void createFClawOpen () { //BotGuy Claw Opens
-	set_servo_position(FClawServo, FClawOpen);
+int FindColor() {
+  int failed = 0;
+  int counter = 0;
+  while(1==1) {
+    if(counter == 9) {
+      if(failed <= 4) {
+        printf("sees green\n");
+        return 1;
+      }
+      else {
+        printf("sees red\n");
+        return 0;
+      }
+    }
+    if (checkTribbles() != 1) {
+      ++failed;
+    }
+    ++counter;
+    msleep(50);
+  }
 }
 
-void createBClawOpen () { //BotGuy Claw Opens
-	set_servo_position(BClawServo, BClawOpen);
+void SetTribbles(ClawSpeed speed) {
+  if (speed == SLOW) {
+    clawCloseSlow(clawClosePos);
+    clawOpen();
+    clawCloseSlow(clawClosePos);
+    clawOpen();
+  }
+  else if (speed == FAST) {
+    clawClose();
+    clawOpen();
+    clawClose();
+    clawOpen();
+  }
 }
 
-void createBClawClose () { //BotGuy Claw Opens
-	set_servo_position(BClawServo, BClawClose);
+void LineTribbles() {
+  SetTribbles(FAST);
+  CreateDriveBack(100, 3);
+  CreateTurnRight(200, 6);
+  SetTribbles(SLOW);
+  CreateTurnLeft(200, 12);
+  SetTribbles(SLOW);
+  CreateTurnRight(200, 6);
+  set_servo_position(clawPort, clawClosePos+400);
+  msleep(300);
+  CreateDrive(100, 11);
+  SetTribbles(FAST);
+  CreateDriveBack(100, 11);
+  clawCloseSlow(clawClosePos);
+  //CreateDrive(100, 9);
 }
 
-void pipeUp() {
-	set_servo_position(grabPort, up_pos);
-}
+void CreateLineSquareUp(int speed, int blackValue, int whiteValue) {
+  int rightSpeed;
+  int leftSpeed;
+  int rightRatio;
+  int leftRatio;
+  int rightVal = analog(rightSensorPort);
+  int leftVal = analog(leftSensorPort);
+  while (leftVal < blackValue - 400 && rightVal < blackValue - 400) {
+    rightRatio = (rightVal-whiteValue)/(blackValue-whiteValue);
+    leftRatio = (leftVal-whiteValue)/(blackValue-whiteValue);
+    if (rightRatio > 1) {
+      rightRatio = 1;
+    }
+    if (leftRatio > 1) {
+      leftRatio = 1;
+    }
+    rightSpeed = speed*(1-rightRatio);
+    leftSpeed = speed*(1-leftRatio);
+    create_drive_direct(leftSpeed, rightSpeed);
+    msleep(5);
 
-void grabPipe() {
-	set_servo_position(grabPort, grab_pos);
-}
-
-void releasePipe() {
-	set_servo_position(grabPort, release_pos);
-}
-
-void createConnectAll () {
-  	create_connect();
-  	createBClawOpen();
-  	createFClawOpen();
-  	enable_servos();
-  	createBClawOpen();
-  	createFClawOpen();
-  	releasePipe();
-  	clear_motor_position_counter(armMotorF);
-  	clear_motor_position_counter(armMotorB);
+    rightVal = analog(rightSensorPort);
+    leftVal = analog(leftSensorPort);
+  }
 }
