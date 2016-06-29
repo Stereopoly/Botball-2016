@@ -63,6 +63,7 @@
 typedef enum {
 	SLOW,
   	FAST,
+    OPENSLOW
 } ClawSpeed;
 
 void StartUp();
@@ -85,6 +86,7 @@ void miniGrabberMid();
 void RaiseBin();
 void LowerBin();
 void clawDown();
+void clawDownSlow(int clawPos);
 void clawUp();
 void clawCarry();
 void clawMid();
@@ -98,4 +100,5 @@ int checkTribbles ();
 int FindColor();
 void SetTribbles(ClawSpeed speed);
 void LineTribbles();
-void CreateLineSquareUp(int speed, int blackValue, int whiteValue);
+void CreateLineSquareUp(int speed, int blackValue, int whiteValue, float strictness, float mult);
+void LowerBinSlow();
