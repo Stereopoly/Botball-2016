@@ -3,11 +3,11 @@
 
 void StartUp() {
   create_connect();
-  set_servo_position(clawMoverPort, clawUpPos);
-  set_servo_position(clawPort, clawOpenPos);
+  set_servo_position(clawMoverPort, clawDownPos);
+  set_servo_position(clawPort, 1650);
   enable_servos();
   set_servo_position(clawMoverPort, clawDownPos);
-  set_servo_position(clawPort, clawOpenPos);
+  set_servo_position(clawPort, 1650);
   set_servo_position(binPort, grabBinPos);
   printf("opening camera\n");
   camera_open();
@@ -226,6 +226,57 @@ void RaiseBin() {
   printf("done raising\n");
 }
 
+void LowerBinSlow() {
+  int curr_pos = grabBinPos;
+  while(curr_pos < releaseBinPos) {
+    if(curr_pos + 80 > releaseBinPos) {
+      curr_pos = releaseBinPos;
+    }
+    else {
+      curr_pos += 80;
+    }
+    set_servo_position(binPort, curr_pos);
+    printf("setting bin pos to %d\n", curr_pos);
+    msleep(100);
+  }
+  msleep(300);
+  printf("done raising\n");
+}
+
+void clawUpSlow() {
+  int curr_pos = get_servo_position(clawMoverPort);
+  while(curr_pos < clawUpPos) {
+    if(curr_pos + 80 > clawUpPos) {
+      curr_pos = clawUpPos;
+    }
+    else {
+      curr_pos += 80;
+    }
+    set_servo_position(clawMoverPort, curr_pos);
+    printf("setting bin pos to %d\n", curr_pos);
+    msleep(100);
+  }
+  msleep(300);
+  printf("done raising\n");
+}
+
+void clawDownSlow(int clawPos) {
+  int curr_pos = get_servo_position(clawMoverPort);
+  while(curr_pos > clawPos) {
+    if(curr_pos - 80 < clawPos) {
+      curr_pos = clawPos;
+    }
+    else {
+      curr_pos -= 80;
+    }
+    set_servo_position(clawMoverPort, curr_pos);
+    printf("setting bin pos to %d\n", curr_pos);
+    msleep(100);
+  }
+  msleep(300);
+  printf("done raising\n");
+}
+
 void LowerBin() {
   set_servo_position(binPort, releaseBinPos);
   msleep(300);
@@ -269,6 +320,23 @@ void clawCloseSlow(int closePos) {
     }
     else {
       curr_pos -= 110;
+    }
+    set_servo_position(clawPort, curr_pos);
+    printf("setting claw pos to %d\n", curr_pos);
+    msleep(100);
+  }
+  msleep(300);
+  printf("done closing\n");
+}
+
+void clawOpenSlow(int OpenPos) {
+  int curr_pos = clawClosePos;
+  while(curr_pos < OpenPos+100) {
+    if(curr_pos + 110 > OpenPos+100) {
+      curr_pos = OpenPos+100;
+    }
+    else {
+      curr_pos += 110;
     }
     set_servo_position(clawPort, curr_pos);
     printf("setting claw pos to %d\n", curr_pos);
@@ -366,7 +434,7 @@ int FindColor() {
   int counter = 0;
   while(1==1) {
     if(counter == 9) {
-      if(failed <= 4) {
+      if(failed <= 6) {
         printf("sees green\n");
         return 1;
       }
@@ -396,6 +464,12 @@ void SetTribbles(ClawSpeed speed) {
     clawClose();
     clawOpen();
   }
+  else if (speed == OPENSLOW) {
+    clawCloseSlow(clawClosePos);
+    clawOpenSlow(clawOpenPos);
+    clawCloseSlow(clawClosePos);
+    clawOpenSlow(clawOpenPos);
+  }
 }
 
 void LineTribbles() {
@@ -406,33 +480,26 @@ void LineTribbles() {
   CreateTurnLeft(200, 12);
   SetTribbles(SLOW);
   CreateTurnRight(200, 6);
-  set_servo_position(clawPort, clawClosePos+400);
-  msleep(300);
+  clawCloseSlow(clawClosePos+300);
   CreateDrive(100, 11);
-  SetTribbles(FAST);
+  SetTribbles(OPENSLOW);
   CreateDriveBack(100, 11);
-  clawCloseSlow(clawClosePos);
+  clawCloseSlow(clawClosePos+50);
   //CreateDrive(100, 9);
 }
 
-void CreateLineSquareUp(int speed, int blackValue, int whiteValue) {
-  int rightSpeed;
-  int leftSpeed;
-  int rightRatio;
-  int leftRatio;
-  int rightVal = analog(rightSensorPort);
-  int leftVal = analog(leftSensorPort);
-  while (leftVal < blackValue - 400 && rightVal < blackValue - 400) {
-    rightRatio = (rightVal-whiteValue)/(blackValue-whiteValue);
-    leftRatio = (leftVal-whiteValue)/(blackValue-whiteValue);
-    if (rightRatio > 1) {
-      rightRatio = 1;
-    }
-    if (leftRatio > 1) {
-      leftRatio = 1;
-    }
-    rightSpeed = speed*(1-rightRatio);
-    leftSpeed = speed*(1-leftRatio);
+void CreateLineSquareUp(int speed, int blackValue, int whiteValue, float strictness, float mult) {
+  float rightSpeed;
+  float leftSpeed;
+  float rightRatio;
+  float leftRatio;
+  float rightVal = analog(rightSensorPort);
+  float leftVal = analog(leftSensorPort);
+  while (leftVal < blackValue - 300 || rightVal < blackValue - 300) {
+    rightRatio = (rightVal-whiteValue+strictness)/(blackValue-whiteValue);
+    leftRatio = (leftVal-whiteValue+strictness)/(blackValue-whiteValue);
+    rightSpeed = speed*(1-rightRatio)*mult;
+    leftSpeed = speed*(1-leftRatio)*mult;
     create_drive_direct(leftSpeed, rightSpeed);
     msleep(5);
 
