@@ -1,11 +1,8 @@
 #include "createDrive.h"
 #include <kipr/botball.h>
 
-void Calibrate(int* blackValue, int* whiteValue) {
+void Calibrate(int* blackValue, int* whiteValue, int *blueValue) {
   int cont = 1;
-  clawClose();
-  set_servo_position(clawMoverPort, clawCarryPos+200);
-  msleep(300);
 
   printf("please calibrate black using the left color sensor\n");
   while (cont == 1) {
@@ -24,7 +21,25 @@ void Calibrate(int* blackValue, int* whiteValue) {
   cont = 1;
 
   msleep(1000);
-
+  
+  printf("please calibrate blue using the left color sensor\n");
+  while (cont == 1) {
+    while (a_button() != 1) {
+      printf("current blue value seen is %d\n", analog(leftSensorPort));
+    }
+    if(analog(leftSensorPort) > 900 && analog(leftSensorPort) < 1200) {
+      cont = 0;
+    }
+    else {
+      printf("please recalibrate blue\n");
+    }
+  }
+  *blueValue = analog(leftSensorPort);
+  
+  msleep(1000);
+  
+  cont = 1;
+  
   printf("please calibrate white using the left color sensor\n");
   while (cont == 1) {
     while (a_button() != 1) {
@@ -43,7 +58,8 @@ void Calibrate(int* blackValue, int* whiteValue) {
 void PickUpStartTribble() {
   set_servo_position(clawMoverPort, clawDownPos);
   msleep(200);
-  clawOpen();
+  set_servo_position(clawPort, 1300);
+  msleep(200);
   CreateDrive(createDriveSpeed, 28);
   set_servo_position(clawPort, clawClosePos-110);
   msleep(200);
@@ -64,23 +80,25 @@ void PickUpFirstPile(int blackValue, int whiteValue) {
   //clawOpen();
 
   clawCloseSlow(clawClosePos);
+  clawUp();
+  lineFollowDistance(blackValue, whiteValue, 300, 40);
+  CreateTurnRight(250, 89);
+  CreateSquareUp(createDriveSpeed, 700);
 }
 
 void GrabBin(int blackValue, int whiteValue) {
-  clawUp();
-  lineFollowDistance(blackValue, whiteValue, 300, 30);
-  CreateTurnRight(250, 89);
-  CreateSquareUp(createDriveSpeed, 700);
-  CreateDrive(createDriveSpeed,5);
-  CreateTurnRight(150, 90);
+  CreateDrive(createDriveSpeed,8);
+  CreateTurnRight(75, 82);
   //CreateDrive(150, 10);
   LowerBin();
-  CreateDriveBack(createDriveSpeed, 14);
-  CreateWobbleBackTill (100, 100);
+  //CreateDriveBack(createDriveSpeed, 14);
+  CreateWobbleBackTill (100, 150);
+  msleep(200);
+  CreateDrive(100, 3);
   msleep(200);
   RaiseBin();
   msleep(200);
-  CreateDrive(createDriveSpeed, 15);
+  CreateDrive(createDriveSpeed, 12);
   CreateTurnRight(200, 29);
 }
 
@@ -95,11 +113,11 @@ void DumpPile() {
   //clawClose();
   //clawOpen();
   //clawClose();
-  clawSquareUp();
+  //clawSquareUp();
   msleep(300);
 }
 
-int PickUpSecondPile() {
+int PickUpSecondPile(int blackValue, int whiteValue, int blueValue) {
   //clawDown();
   //CreateWobbleBack (100, 100, 4);
   //clawSquareUp();
@@ -113,6 +131,7 @@ int PickUpSecondPile() {
   set_servo_position(clawPort, clawOpenPos-100);
   msleep(200);
   clawDown();
+  CreateTurnRight(100, 3);
 
   CreateDrive(createDriveSpeed, 15);
   clawCloseSlow(clawClosePos);
@@ -127,24 +146,28 @@ int PickUpSecondPile() {
   }
   //CreateDriveBack(100, 10);
   clawSquareUp();
-  CreateDriveBack(createDriveSpeed, 12);
+  //CreateLineSquareUp(200, blueValue, whiteValue, 500, 1.5);
+  CreateDriveBack(createDriveSpeed, 16);
   CreateTurnRight(200, 94);
   CreateSquareUp(200, 800);
-  CreateDrive(createDriveSpeed, 18);
+  CreateDrive(createDriveSpeed, 20);
   DumpPile();
-  CreateSquareUp(100, 3000);
+  clawDownSlow(clawSquareUpPos);
+  CreateDriveBack(200,  17);
+  CreateSquareUp(100, 1500);
   return greenSeen;
 }
 
 void PrepareToPickUpSecondPile() {
-  CreateDriveBack(createDriveSpeed, 15);
-  CreateSquareUp(150, 3000);
+  CreateDriveBack(createDriveSpeed, 25);
+  CreateTurnLeft(100, 5);
+  CreateSquareUp(150, 1600);
 }
 
 int PickUpThirdPile(int greenSeen) {
   clawOpen();
-  msleep(200);
-  clawDown();
+  msleep(600);
+  clawDownSlow(clawDownPos);
   CreateDrive(createDriveSpeed, 25);
   clawCloseSlow(clawClosePos);
   clawOpen();
@@ -154,7 +177,8 @@ int PickUpThirdPile(int greenSeen) {
     CreateDriveBack(createDriveSpeed, 10);
     CreateTurnLeft(200, 100);
     LineTribbles();
-    CreateTurnRight(200, 92);
+    CreateDrive(100, 3);
+    CreateTurnRight(200, 93);
     CreateDrive(createDriveSpeed, 5);
   }
   else {
@@ -162,22 +186,21 @@ int PickUpThirdPile(int greenSeen) {
     clawOpen();
     clawCloseSlow(clawClosePos);
   }
-  //CreateDrive(100, 22);
   return greenSeen;
 }
 
 void PickUpFourthPile(int greenSeen) {
-  CreateDrive(createDriveSpeed, 24);
+  CreateDrive(createDriveSpeed, 20.5);
   clawOpen();
   msleep(200);
-  clawDown();
+  clawDownSlow(clawDownPos);
   CreateDrive(createDriveSpeed, 13);
 
   if(greenSeen != 1) {
-    clawClose();
+    clawCloseSlow(clawClosePos);
     CreateDriveBack(createDriveSpeed, 10);
     LineTribbles();
-    CreateTurnRight(100, 4);
+    CreateTurnLeft(100, 4);
     CreateDrive(createDriveSpeed, 10);
   }
   else {
@@ -187,13 +210,15 @@ void PickUpFourthPile(int greenSeen) {
   }
 }
 
-void GrabComposter(int blackValue, int whiteValue) {
-  CreateDrive(createDriveSpeed, 29);
+void GrabComposter(int blackValue, int whiteValue, int blueValue) {
+  set_servo_position(clawMoverPort, clawSquareUpPos-150);
+  msleep(200);
+  CreateDrive(createDriveSpeed, 31);
   CreateTurnLeft(100, 27);
-  CreateDrive(createDriveSpeed, 37);
+  CreateDrive(createDriveSpeed, 35);
   clawOpen();
-  CreateDrive(createDriveSpeed, 29);
-  CreateTurnRight(100, 14);
+  CreateDrive(createDriveSpeed, 25);
+  CreateTurnRight(100, 17.5);
   CreateDrive(createDriveSpeed, 14);
   //CreateLineSquareUp(50, blackValue, whiteValue);
   //msleep(2000);
@@ -207,7 +232,16 @@ void GrabComposter(int blackValue, int whiteValue) {
   CreateDrive(createDriveSpeed, 25);
   CreateTurnLeft(100, 90);
   CreateSquareUp(100, 2000);
-  LowerBin();
+  LowerBinSlow();
+}
+
+void BackToBase() {
+	clawUp();
+  	CreateTurnRight(100, 8);
+    CreateDrive(400, 55);
+    CreateTurnRight(200, 195);
+    CreateDriveBack(400, 20);
+    LowerBinSlow();
 }
 
 int main() {
@@ -220,18 +254,20 @@ int main() {
   //clawCarry();
   //CreateDrive(300, 80);
   
-  clawClose();
-  clawUp();
   //CreateDrive(300, 60);
   
   int blackValue;
   int whiteValue;
+  int blueValue;
+  clawCarry();
   
   //CreateDrive(createDriveSpeed, 150);
   
  // LineTribbles();
   
-  Calibrate(&blackValue, &whiteValue);
+  Calibrate(&blackValue, &whiteValue, &blueValue);
+  
+  //CreateLineSquareUp(100, blackValue, whiteValue);
 
   msleep(3000);
   printf("starting\n");
@@ -244,10 +280,11 @@ int main() {
   GrabBin(blackValue, whiteValue);
 
   DumpPile();
+  clawSquareUp();
   
   PrepareToPickUpSecondPile();
 
-  greenSeen = PickUpSecondPile(greenSeen);
+  greenSeen = PickUpSecondPile(blackValue, whiteValue, blueValue);
 
   greenSeen = PickUpThirdPile(greenSeen);
 
@@ -257,9 +294,13 @@ int main() {
 
   DumpPile();
 
-  GrabComposter(blackValue, whiteValue);
+  //GrabComposter(blackValue, whiteValue, blueValue);
+  
+  BackToBase();
 
   msleep(1000);
+  
+  //CreateLineSquareUp(100, blackValue, whiteValue, 1000, 1.5); for black
 
   ao();
   camera_close();
