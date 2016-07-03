@@ -5,7 +5,10 @@ void StartUp() {
   enable_servos();
   set_servo_position(ARM_PORT, ARM_DOWN);
   set_servo_position(CARDBOARD_PORT, CARDBOARD_START);
+  set_servo_position(2, 800);
   msleep(300);
+  wait_for_light(5);
+  shut_down_in(119);
 }
 void LinkThrowIgus() {
   set_servo_position(ARM_PORT, ARM_OUT);
