@@ -12,12 +12,12 @@
 			Claw Definitons
 **************************************/            
               
-#define clawOpenPos 1600
-#define clawClosePos 900
-#define clawDownPos 400
-#define clawCarryPos 775
-#define clawUpPos 2030
-#define clawSquareUpPos 1100
+#define clawOpenPos 350
+#define clawClosePos 1000
+#define clawDownPos 250
+#define clawCarryPos 580
+#define clawUpPos 1970
+#define clawSquareUpPos 700
 
 /**************************************
 		  Mini Claw Definitons
@@ -59,6 +59,9 @@
 
 #define leftSensorPort 4
 #define rightSensorPort 5
+#define ETPort 1
+#define ETUpper 3000
+#define ETLower 2700
 
 typedef enum {
 	SLOW,
@@ -73,13 +76,15 @@ void CreateDriveSlowDown (float startSpeed, float distance);
 void CreateDriveBack (float speed, float distance);
 void CreateWobble (int wobbleSpeed, float wobbleTime, int wobbles);
 void CreateWobbleBack (int wobbleSpeed, float wobbleTime, int wobbles);
-void CreateWobbleBackTill (int wobbleSpeed, float wobbleTime);
+void CreateWobbleBackTill (int wobbleSpeed, float wobbleTime, float timer);
 void CreateDriveUntilTouch (float speed);
 void CreateSquareUp(float speed, float time);
 void CreateDriveUntil (float speed, float time);
 void CreateTurnLeft(float speed, int degrees);
 void CreateTurnRight(float speed, int degrees);
 //int createDriveUntilColor(float speed);
+void CreateTurnRightConst(float speed, int degrees);
+void CreateTurnLeftConst(float speed, int degrees);
 void miniGrabberDown();
 void miniGrabberUp();
 void miniGrabberMid();
@@ -96,9 +101,12 @@ void clawClose();
 void clawCloseSlow();
 void lineFollow(int blackValue, int whiteValue, float time, float speed);
 void lineFollowDistance(int blackValue, int whiteValue, float speed, float distance);
+void CreateDriveBackET(float speed);
 int checkTribbles ();
 int FindColor();
 void SetTribbles(ClawSpeed speed);
 void LineTribbles();
 void CreateLineSquareUp(int speed, int blackValue, int whiteValue, float strictness, float mult);
 void LowerBinSlow();
+void Wibble(int speed, int time, int times);
+void DriveUntilET(int speed);
