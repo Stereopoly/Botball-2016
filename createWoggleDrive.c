@@ -4,10 +4,8 @@
 void StartUp() {
   create_connect();
   set_servo_position(clawMoverPort, clawDownPos);
-  set_servo_position(clawPort, 1650);
   enable_servos();
   set_servo_position(clawMoverPort, clawDownPos);
-  set_servo_position(clawPort, 1650);
   set_servo_position(binPort, grabBinPos);
   printf("opening camera\n");
   camera_open();
@@ -114,11 +112,12 @@ void CreateWobbleBack (int wobbleSpeed, float wobbleTime, int wobbles) {
   create_stop();
 }
 
-void CreateWobbleBackTill (int wobbleSpeed, float wobbleTime) {
-  while (!digital(touchPort)) {
+void CreateWobbleBackTill (int wobbleSpeed, float wobbleTime, float timer) {
+  int time_start = seconds();
+  while (!digital(touchPort) && seconds() < time_start+timer) {
     create_drive_direct(0, -wobbleSpeed);
     msleep(wobbleTime);
-    create_drive_direct(-wobbleSpeed, 0);
+    create_drive_direct(-wobbleSpeed*0.94, 0);
     msleep(wobbleTime);
   }
   create_stop();
@@ -194,6 +193,20 @@ void CreateTurnRight(float speed, int degrees) {
   create_stop();
 }
 
+void CreateTurnRightConst(float speed, int degrees) {
+  set_create_normalized_angle(degrees*createTurnOffset); //Reset the angle
+  create_spin_CW(speed); //Spin at half power
+  while(get_create_normalized_angle() > 0) {} //and finish the turn
+  create_stop();
+}
+
+void CreateTurnLeftConst(float speed, int degrees) {
+  set_create_normalized_angle(0); //Reset the angle
+  create_spin_CCW(speed); //Spin at half power
+  while(get_create_normalized_angle() < degrees) {} //and finish the turn
+  create_stop();
+}
+
 void miniGrabberDown() {
   set_servo_position(miniMoverPort, miniDownPos);
   msleep(300);
@@ -260,23 +273,6 @@ void clawUpSlow() {
   printf("done raising\n");
 }
 
-void clawDownSlow(int clawPos) {
-  int curr_pos = get_servo_position(clawMoverPort);
-  while(curr_pos > clawPos) {
-    if(curr_pos - 80 < clawPos) {
-      curr_pos = clawPos;
-    }
-    else {
-      curr_pos -= 80;
-    }
-    set_servo_position(clawMoverPort, curr_pos);
-    printf("setting bin pos to %d\n", curr_pos);
-    msleep(100);
-  }
-  msleep(300);
-  printf("done raising\n");
-}
-
 void LowerBin() {
   set_servo_position(binPort, releaseBinPos);
   msleep(300);
@@ -313,13 +309,13 @@ void clawClose() {
 }
 
 void clawCloseSlow(int closePos) {
-  int curr_pos = clawOpenPos;
-  while(curr_pos > closePos-100) {
-    if(curr_pos - 110 < closePos-100) {
-      curr_pos = closePos-100;
+  int curr_pos = get_servo_position(clawPort);
+  while(curr_pos < closePos) {
+    if(curr_pos + 100 > closePos) {
+      curr_pos = closePos;
     }
     else {
-      curr_pos -= 110;
+      curr_pos += 100;
     }
     set_servo_position(clawPort, curr_pos);
     printf("setting claw pos to %d\n", curr_pos);
@@ -329,14 +325,48 @@ void clawCloseSlow(int closePos) {
   printf("done closing\n");
 }
 
-void clawOpenSlow(int OpenPos) {
-  int curr_pos = clawClosePos;
-  while(curr_pos < OpenPos+100) {
-    if(curr_pos + 110 > OpenPos+100) {
-      curr_pos = OpenPos+100;
+void clawCloseSlowFast(int closePos) {
+  int curr_pos = get_servo_position(clawPort);
+  while(curr_pos < closePos) {
+    if(curr_pos + 150 > closePos) {
+      curr_pos = closePos;
     }
     else {
-      curr_pos += 110;
+      curr_pos += 150;
+    }
+    set_servo_position(clawPort, curr_pos);
+    printf("setting claw pos to %d\n", curr_pos);
+    msleep(100);
+  }
+  msleep(300);
+  printf("done closing\n");
+}
+
+void clawDownSlow(int clawPos) {
+  int curr_pos = get_servo_position(clawMoverPort);
+  while(curr_pos > clawPos) {
+    if(curr_pos - 80 < clawPos) {
+      curr_pos = clawPos;
+    }
+    else {
+      curr_pos -= 80;
+    }
+    set_servo_position(clawMoverPort, curr_pos);
+    printf("setting bin pos to %d\n", curr_pos);
+    msleep(100);
+  }
+  msleep(300);
+  printf("done raising\n");
+}
+
+void clawOpenSlow(int OpenPos) {
+  int curr_pos = get_servo_position(clawPort);
+  while(curr_pos > OpenPos) {
+    if(curr_pos - 100 < OpenPos) {
+      curr_pos = OpenPos;
+    }
+    else {
+      curr_pos -= 100;
     }
     set_servo_position(clawPort, curr_pos);
     printf("setting claw pos to %d\n", curr_pos);
@@ -412,7 +442,32 @@ void lineFollowDistance(int blackValue, int whiteValue, float speed, float dista
     create_drive_direct(left_speed, right_speed);
     msleep(5);
   }
+  create_stop();
+}
+  
+void CreateDriveBackET(float speed) {
+  int ETVal = analog(ETPort);
+  create_drive_direct(-speed*createLeftOffset, -speed*createRightOffset);
+  while(ETVal < ETLower || ETVal  > ETUpper) {
+    /*right_value = analog(rightSensorPort);
+    left_value = analog(leftSensorPort);
 
+    right_ratio = ((right_value - whiteValue) / diff);
+    if(right_ratio > 1) {
+      right_ratio = 1;
+    }
+    right_speed = speed * (1 - right_ratio * multiplier);
+
+    left_ratio = ((left_value-whiteValue)/diff);
+    if(left_ratio > 1) {
+      left_ratio = 1;
+    }
+    left_speed = speed*(1 - left_ratio * multiplier);
+    //printf("right ratio = %f, left ratio = %f", right_ratio, left_ratio);
+    create_drive_direct(-left_speed, -right_speed);*/
+    ETVal = analog(ETPort);
+    msleep(2);
+  }
   create_stop();
 }
 
@@ -465,26 +520,31 @@ void SetTribbles(ClawSpeed speed) {
     clawOpen();
   }
   else if (speed == OPENSLOW) {
-    clawCloseSlow(clawClosePos);
+    clawCloseSlowFast(clawClosePos);
     clawOpenSlow(clawOpenPos);
-    clawCloseSlow(clawClosePos);
+    clawCloseSlowFast(clawClosePos);
     clawOpenSlow(clawOpenPos);
   }
 }
 
 void LineTribbles() {
-  SetTribbles(FAST);
+  clawClose();
+  clawOpen();
+  clawClose();
+  clawOpen();
   CreateDriveBack(100, 3);
   CreateTurnRight(200, 6);
-  SetTribbles(SLOW);
+  SetTribbles(OPENSLOW);
   CreateTurnLeft(200, 12);
-  SetTribbles(SLOW);
+  SetTribbles(OPENSLOW);
+  clawCloseSlow(clawClosePos);
   CreateTurnRight(200, 6);
-  clawCloseSlow(clawClosePos+300);
+  clawOpenSlow(clawOpenPos);
+  clawCloseSlow(clawClosePos-500);
   CreateDrive(100, 11);
   SetTribbles(OPENSLOW);
-  CreateDriveBack(100, 11);
-  clawCloseSlow(clawClosePos+50);
+  CreateDriveBack(100, 12);
+  clawCloseSlow(clawClosePos-50);
   //CreateDrive(100, 9);
 }
 
@@ -506,4 +566,16 @@ void CreateLineSquareUp(int speed, int blackValue, int whiteValue, float strictn
     rightVal = analog(rightSensorPort);
     leftVal = analog(leftSensorPort);
   }
+}
+
+void Wibble(int speed, int time, int times) {
+  int i = 0;
+  while(i < times) {
+    create_drive_direct(speed, -speed);
+    msleep(time);
+    create_drive_direct(-speed, speed);
+    msleep(time);
+    ++i;
+  }
+  create_stop();
 }
