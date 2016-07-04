@@ -1,52 +1,50 @@
-#include <kipr/botball.h>
 #include "drive.h"
-
-void hopPipes() {
-  linkSquareUp(700, 1500);
-  hop();
-  //linkSquareUp(900, 1500);
-  //linkSquareUp(500, -1500);
-
-  linkSquareUp(1900, 1500);
-  hop();
-  set_servo_position(0, 490);
-  msleep(200);
+#include <kipr/botball.h>
+void hop_pipes(){
+  	linkDrive(2, 1600);
+    hop();
+  	msleep(1250);
+  	linkDrive(7.5, 1600);
+  	hop();
 }
-
-void flipBin() {
-  mav(0, 1300);   // speeds needed to drive straight
-  mav(1, 1500);   // speeds needed to drive straight
-  msleep(4000);
-  mav(0, 1400);  //drive a bit tilted to not hit the pipe
-  mav(1, 1500);
-  /*mav(0, 1000);
-  mav(1, 0);
-  msleep(200);
-  mav(0, 1450);
-  mav(1, 1500);
-  msleep(2700);
-  mav(0, -1450);
-  msleep(450);
-  mav(0, 1450);*/
-  set_servo_position(0,940);
-  msleep(1500);
-  set_servo_position(0,490);
-  msleep(1600);
+void flip_bins(){
+    int i = 0;
+    set_servo_position(ARM_PORT, 800);
+ 	mav(RIGHT_PORT, 1500);
+    mav(LEFT_PORT, 1500);
+    msleep(6500);
+    while (i < 5){
+      mav(RIGHT_PORT, 1500);
+      mav(LEFT_PORT, -1500);
+      msleep(500);
+      mav(LEFT_PORT, 1500);
+      mav(RIGHT_PORT, -1500);
+      msleep(500);
+      i++;
+    }
+  	set_servo_position(ARM_PORT, 200);
+	msleep(250);
+  	linkSquareUp(2500, 1500);
 }
-
-int main() {
-  startUp();
-  set_servo_position(0,490);
-  msleep(300);
-  hopPipes();
-  flipBin();
-
-  //linkSquareUp(900, 1500);
-  //linkSquareUp(500, -1500);
-
-  
-  linkDriveBack(12, 1500);
-  linkDriveToOpponentBase();
-  ao();
-  return 0;
+//Direction should be -1 or 1.
+void spin(short direction, float rotations){
+  	 int cw = 0;
+  	 while (cw < rotations){
+     	mav(0, direction*1500);
+       	msleep(5000);
+        cw++;
+     }
+}
+int main(){
+	startUp();
+	hop_pipes();
+  	flip_bins();
+  	linkDriveBack(17.5, 1500);
+  	SpinReady();
+  	set_servo_position(ARM_PORT, 800);
+ 	while (1 == 1){
+	  	spin(1, 1.15);
+     	spin(-1, 1);
+    }
+ 	return 0;
 }
