@@ -46,8 +46,12 @@ void hop() {
   	msleep(500);
 }
 
-void linkDriveToOpponentBase(){
+void SpinReady(){
+  	printf("Turning left... \n");
   	mav(RIGHT_PORT, 1500*LINK_RIGHT_OFFSET);
-  	msleep(1250);
+  	msleep(1400);
+  	linkSquareUp(1500, -1500);
+    printf("Moving forward... \n");
+  	linkDrive(60, 1500);
   	ao();
 }
