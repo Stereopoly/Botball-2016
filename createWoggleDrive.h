@@ -12,11 +12,11 @@
 			Claw Definitons
 **************************************/            
               
-#define clawOpenPos 350
-#define clawClosePos 1000
+#define clawOpenPos 250
+#define clawClosePos 1050
 #define clawDownPos 250
 #define clawCarryPos 580
-#define clawUpPos 1970
+#define clawUpPos 2030
 #define clawSquareUpPos 700
 
 /**************************************
@@ -50,6 +50,8 @@
 #define createLeftOffset 0.952
 //#define createLeftOffset 0.99
 #define createDriveOffset 1
+#define createLeftSlowOffset 0.838
+#define createRightSlowOffset 1
 #define createTurnOffset 0.92
 #define createDriveSpeed 250
 
@@ -101,7 +103,7 @@ void clawClose();
 void clawCloseSlow();
 void lineFollow(int blackValue, int whiteValue, float time, float speed);
 void lineFollowDistance(int blackValue, int whiteValue, float speed, float distance);
-void CreateDriveBackET(float speed);
+void CreateDriveBackET(float speed, float time);
 int checkTribbles ();
 int FindColor();
 void SetTribbles(ClawSpeed speed);
@@ -110,3 +112,4 @@ void CreateLineSquareUp(int speed, int blackValue, int whiteValue, float strictn
 void LowerBinSlow();
 void Wibble(int speed, int time, int times);
 void DriveUntilET(int speed);
+void TurnRightBlackWhite(int speed, int blackVal, int whiteVal);
