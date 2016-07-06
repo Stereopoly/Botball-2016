@@ -6,7 +6,7 @@ void StartUp() {
   set_servo_position(clawMoverPort, clawDownPos);
   enable_servos();
   set_servo_position(clawMoverPort, clawDownPos);
-  set_servo_position(binPort, grabBinPos);
+  set_servo_position(binPort, startBinPos);
   printf("opening camera\n");
   camera_open();
 }
@@ -258,7 +258,8 @@ void LowerBinSlow() {
 
 void clawUpSlow() {
   int curr_pos = get_servo_position(clawMoverPort);
-  while(curr_pos < clawUpPos) {
+  int init_time = seconds();
+  while(curr_pos < clawUpPos && seconds() < init_time+5) {
     if(curr_pos + 80 > clawUpPos) {
       curr_pos = clawUpPos;
     }
@@ -310,7 +311,8 @@ void clawClose() {
 
 void clawCloseSlow(int closePos) {
   int curr_pos = get_servo_position(clawPort);
-  while(curr_pos < closePos) {
+  int init_time = seconds();
+  while(curr_pos < closePos && seconds() < init_time+3) {
     if(curr_pos + 100 > closePos) {
       curr_pos = closePos;
     }
@@ -327,7 +329,8 @@ void clawCloseSlow(int closePos) {
 
 void clawCloseSlowFast(int closePos) {
   int curr_pos = get_servo_position(clawPort);
-  while(curr_pos < closePos) {
+  int init_time = seconds();
+  while(curr_pos < closePos && seconds() < init_time+2) {
     if(curr_pos + 230 > closePos) {
       curr_pos = closePos;
     }
@@ -344,7 +347,8 @@ void clawCloseSlowFast(int closePos) {
 
 void clawDownSlow(int clawPos) {
   int curr_pos = get_servo_position(clawMoverPort);
-  while(curr_pos > clawPos) {
+  int init_time = seconds();
+  while(curr_pos > clawPos && seconds() < init_time+5) {
     if(curr_pos - 80 < clawPos) {
       curr_pos = clawPos;
     }
@@ -360,8 +364,9 @@ void clawDownSlow(int clawPos) {
 }
 
 void clawOpenSlow(int OpenPos) {
+  int init_time = seconds();
   int curr_pos = get_servo_position(clawPort);
-  while(curr_pos > OpenPos) {
+  while(curr_pos > OpenPos && seconds() < init_time+3) {
     if(curr_pos - 100 < OpenPos) {
       curr_pos = OpenPos;
     }
@@ -445,14 +450,14 @@ void lineFollowDistance(int blackValue, int whiteValue, float speed, float dista
   create_stop();
 }
 
-void CreateDriveBackET(float speed, float time) {
+int CreateDriveBackET(float speed, float time) {
   int ETVal = analog(ETPort);
   int distToAlternate = 0;
   int leftSpeedAdjust = 1;
   int prevDist = get_create_distance();
   float init_time = seconds();
   create_drive_direct(-speed*createLeftSlowOffset, -speed*createRightSlowOffset);
-  while((ETVal < ETLower || ETVal  > ETUpper) && seconds()-init_time < time && digital(touchPort) == 0) {
+  while(digital(touchPort) == 0 && (ETVal < ETLower || ETVal  > ETUpper) && seconds()-init_time < time) {
     distToAlternate = prevDist - get_create_distance();
     if (distToAlternate >= 10) {
       // Alternative speed
@@ -483,6 +488,12 @@ void CreateDriveBackET(float speed, float time) {
     msleep(2);
   }
   create_stop();
+  if(digital(touchPort) == 1) {
+  	return 0;
+  }
+  else {
+  	return 1;
+  }
 }
 
 int checkTribbles () {
@@ -503,7 +514,7 @@ int FindColor() {
   int counter = 0;
   while(1==1) {
     if(counter == 9) {
-      if(failed <= 6) {
+      if(failed <= 5) {
         printf("sees green\n");
         return 1;
       }
@@ -551,14 +562,18 @@ void LineTribbles() {
   SetTribbles(OPENSLOW);
   CreateTurnLeft(200, 12);
   clawCloseSlow(clawClosePos);
-  clawOpenSlow(clawOpenPos+350);
+  clawOpenSlow(clawOpenPos);   // +350
   clawCloseSlow(clawClosePos);
   CreateTurnRight(200, 6);
-  clawOpenSlow(clawClosePos-200);
+  clawOpenSlow(clawClosePos-320);  // -200
   CreateDrive(100, 11);
-  SetTribbles(OPENSLOW);
+  clawClose();
+  clawOpenSlow(clawOpenPos+350);
+  clawClose();
+  clawOpenSlow(clawOpenPos+350);
   CreateDriveBack(100, 13);
-  clawCloseSlow(clawClosePos-50);
+  clawOpenSlow(clawOpenPos);
+  clawClose();  // -50
   CreateDriveBack(100, 2);
   //CreateDrive(100, 9);
 }
