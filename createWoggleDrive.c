@@ -4,7 +4,9 @@
 void StartUp() {
   create_connect();
   set_servo_position(clawMoverPort, clawDownPos);
+  set_servo_position(clawPort, clawClosePos-100);
   enable_servos();
+  set_servo_position(clawPort, clawClosePos-100);
   set_servo_position(clawMoverPort, clawDownPos);
   set_servo_position(binPort, startBinPos);
   printf("opening camera\n");
@@ -313,15 +315,15 @@ void clawCloseSlow(int closePos) {
   int curr_pos = get_servo_position(clawPort);
   int init_time = seconds();
   while(curr_pos < closePos && seconds() < init_time+3) {
-    if(curr_pos + 100 > closePos) {
+    if(curr_pos + 50 > closePos) {
       curr_pos = closePos;
     }
     else {
-      curr_pos += 100;
+      curr_pos += 50;
     }
     set_servo_position(clawPort, curr_pos);
     printf("setting claw pos to %d\n", curr_pos);
-    msleep(100);
+    msleep(50);
   }
   msleep(300);
   printf("done closing\n");
@@ -565,7 +567,7 @@ void LineTribbles() {
   clawOpenSlow(clawOpenPos);   // +350
   clawCloseSlow(clawClosePos);
   CreateTurnRight(200, 6);
-  clawOpenSlow(clawClosePos-320);  // -200
+  clawOpenSlow(clawClosePos-370);  // -200
   CreateDrive(100, 11);
   clawClose();
   clawOpenSlow(clawOpenPos+350);
