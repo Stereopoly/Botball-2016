@@ -35,7 +35,7 @@
 **************************************/              
 
 #define grabBinPos 0
-#define releaseBinPos 2020
+#define releaseBinPos 1825
 #define startBinPos 760
               
 /**************************************
