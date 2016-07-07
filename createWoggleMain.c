@@ -100,7 +100,7 @@ void GrabBin(int blackValue, int whiteValue) {
   //CreateTurnRightConst(40, 92);
   CreateDrive(createDriveSpeed, 4);
   LowerBin();
-  if(CreateDriveBackET(60, 5.5) == 1) {
+  if(CreateDriveBackET(60, 6.5) == 1) {
     CreateDrive(100, 2);
   }
   //CreateDrive(60, 2);
@@ -206,7 +206,7 @@ int PickUpThirdPile(int greenSeen) {
     LineTribbles();
     clawCarry();
     CreateDrive(100, 3);
-    CreateTurnRight(200, 93);
+    CreateTurnRight(200, 91);
     CreateDrive(createDriveSpeed, 5);
   }
   else {
@@ -239,7 +239,7 @@ void PickUpFourthPile(int greenSeen) {
   else {
     clawCloseSlow(clawClosePos);
     clawOpen();
-    CreateDrive(100, 5);
+    CreateDrive(100, 3);
     clawCloseSlow(clawClosePos+100);
   }
 }
@@ -269,16 +269,26 @@ void GrabComposter(int blackValue, int whiteValue, int blueValue) {
   LowerBinSlow();
 }
 
-void BackToBase() {
+void BackToBase(float init_time) {
   clawUp();
   CreateTurnLeft(200, 89);
   CreateDriveBack(300, 15);
   CreateSquareUp(150, 1500);
   CreateDrive(100, 10);
   CreateTurnLeft(200, 96);
-  CreateDriveBack(400, 95);
-  Wibble(50, 140, 5);
-  msleep(300);
+  CreateDriveBack(400, 12);
+  set_servo_position(clawPort, get_servo_position(clawPort) + 150);
+  CreateDriveBack(400, 10);
+  set_servo_position(clawPort, get_servo_position(clawPort) - 150);
+  CreateDriveBack(400, 10);
+  set_servo_position(clawPort, get_servo_position(clawPort) + 150);
+  CreateDriveBack(400, 10);
+  set_servo_position(clawPort, get_servo_position(clawPort) - 150);
+  CreateDriveBack(400, 50);
+  if(seconds() - init_time <= 118) {
+    Wibble(50, 140, 5);
+    msleep(300);
+  }
   LowerBinSlow();
 }
 
@@ -312,6 +322,7 @@ int main() {
 
   printf("starting\n");
   shut_down_in(119);
+  int init_time = seconds();
   set_servo_position(binPort, releaseBinPos);
   msleep(1000);
   set_servo_position(binPort, grabBinPos);
@@ -351,7 +362,7 @@ int main() {
 
   //GrabComposter(blackValue, whiteValue, blueValue);
 
-  BackToBase();
+  BackToBase(init_time);
 
   msleep(1000);
 
