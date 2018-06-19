@@ -4,3 +4,5 @@
 
 * Head Captain - Daniel Wang
 * Programming/Build Captain - Oscar Bjorkman
+
+Deprecated. Eventually something cool may happen.
