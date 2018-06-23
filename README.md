@@ -1,7 +1,21 @@
 ![2016 Code Release](2016.png)
-# LACT Botball-2016
+## Los Altos Community Team 16-0399 Code Release of the 2016 Season
 
-### Repository for Los Altos Community Team 16-0399 2016 Season
-
+### Leadership
 * Head Captain - Daniel Wang
 * Programming/Build Captain - Oscar Bjorkman
+
+### Competition Results
+* 4th Place Seeding at GCER
+* Top 16 Double Elimination
+* Best Robot Subsystem
+* NorCal Regional 1st Overall
+
+### Details
+We were the "seeding" sub-team that attended GCER, yet we also happened to build some highly dominant Double Elimination robots.
+
+### Usage
+Feel free to take a look at the code and make use of it on your own robots. However, please don't pass the code off as your own!
+
+### License
+MIT
