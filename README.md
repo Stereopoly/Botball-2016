@@ -9,7 +9,7 @@
 * 4th Place Seeding at GCER
 * Top 16 Double Elimination
 * Best Robot Subsystem
-* NorCal Regional 1st Overall
+* 1st Place Overall at NorCal Regional
 
 ### Details
 We were the "seeding" sub-team that attended GCER, yet we also happened to build some highly dominant Double Elimination robots.
