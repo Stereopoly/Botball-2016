@@ -4,9 +4,7 @@
 #define CARDBOARD_PORT 1
 
 #define ARM_DOWN 292
-//#define ARM_OUT 1500
 #define ARM_OUT 1900
-//#define ARM_OUT 770
 #define CARDBOARD_LOW 470
 #define CARDBOARD_MID 250
 #define CARDBOARD_HI 160
