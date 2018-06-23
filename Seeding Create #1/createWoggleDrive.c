@@ -144,39 +144,6 @@ void CreateDriveUntil (float speed, float time) {
   create_stop();
 }
 
-/*int createDriveUntilColor(float speed) {
-  create_drive_direct(speed*createLeftOffset, speed*createRightOffset);
-  camera_update();
-  int cont = 1;
-  int i = 0;
-  while(cont == 1) {
-    camera_update();
-    if((get_object_count(red_channel) > 0 && get_object_center_y(red_channel, 0) < 110 && get_object_center_y(red_channel, 0) > 25) || 
-       (get_object_count(green_channel) > 0 && get_object_center_y(green_channel, 0) < 110 && get_object_center_y(green_channel, 0) > 25)) {
-     	while(i < 7) {
-        camera_update();
-        if(!(get_object_count(red_channel) > 0 || get_object_center_y(red_channel, 0) < 110 || get_object_center_y(red_channel, 0) > 25 || 
-             get_object_count(green_channel) > 0 || get_object_center_y(green_channel, 0) < 110 || get_object_center_y(green_channel, 0) > 25)) {
-          break;
-        }
-        if(i == 6) {
-          cont = 0;
-          break;
-        }
-        msleep(100);
-        ++i;
-      }
-    }
-  }
-  if(get_object_count(red_channel) > 0 && get_object_center_y(red_channel, 0) < 110 && get_object_center_y(red_channel, 0) > 25) {
-    return 0;
-  }
-  else {
-    return 1;
-  }
-  ao();
-}*/
-
 void CreateTurnLeft(float speed, int degrees) {
   set_create_normalized_angle(0); //Reset the angle
   create_spin_CCW(speed); //Spin at half power
@@ -470,22 +437,6 @@ int CreateDriveBackET(float speed, float time) {
       printf("left speed = %d, right speed = %d\n", -(speed*createLeftSlowOffset + leftSpeedAdjust), -speed*createRightSlowOffset);
     }
 
-    /*right_value = analog(rightSensorPort);
-    left_value = analog(leftSensorPort);
-
-    right_ratio = ((right_value - whiteValue) / diff);
-    if(right_ratio > 1) {
-      right_ratio = 1;
-    }
-    right_speed = speed * (1 - right_ratio * multiplier);
-
-    left_ratio = ((left_value-whiteValue)/diff);
-    if(left_ratio > 1) {
-      left_ratio = 1;
-    }
-    left_speed = speed*(1 - left_ratio * multiplier);
-    //printf("right ratio = %f, left ratio = %f", right_ratio, left_ratio);
-    create_drive_direct(-left_speed, -right_speed);*/
     ETVal = analog(ETPort);
     msleep(2);
   }
