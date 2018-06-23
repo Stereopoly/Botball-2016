@@ -22,36 +22,12 @@ void Calibrate(int* blackValue, int* whiteValue, int *blueValue) {
 
   msleep(1000);
 
-  /*printf("please calibrate blue using the left color sensor\n");
-  while (cont == 1) {
-    while (a_button() != 1) {
-      printf("current blue value seen is %d\n", analog(leftSensorPort));
-    }
-    if(analog(leftSensorPort) > 900 && analog(leftSensorPort) < 1200) {
-      cont = 0;
-    }
-    else {
-      printf("please recalibrate blue\n");
-    }
-  }
-  *blueValue = analog(leftSensorPort);
-
-  msleep(1000);
-
-  cont = 1;*/
-
   printf("please calibrate white using the left color sensor\n");
   //while (cont == 1) {
     while (a_button() != 1) {
       printf("current white value seen is %d\n", analog(leftSensorPort));
     }
-    /*if(analog(leftSensorPort) < 525) {
-      cont = 0;
-    }
-    else {
-      printf("please recalibrate white\n");
-    }*/
-  //}
+    
   *whiteValue = analog(leftSensorPort);
 }
 
